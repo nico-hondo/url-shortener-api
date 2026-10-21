@@ -61,6 +61,29 @@ info:
   title: Url Shortener
   version: "1.0"
 paths:
+  /{slug}:
+    get:
+      description: Redirect to original URL by slug
+      parameters:
+      - description: Short link slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      responses:
+        "302":
+          description: Found
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Redirect Short Link
+      tags:
+      - Link
   /api/links:
     post:
       consumes:

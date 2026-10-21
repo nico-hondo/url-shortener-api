@@ -17,4 +17,5 @@ func initLinkRouter(r *gin.Engine, db *pgxpool.Pool) {
 	lh := controller.NewLinkController(ls)
 
 	linkRouter.POST("/links", middleware.CheckToken, lh.CreateLinkController)
+	r.GET("/:slug", lh.RedirectLinkController)
 }

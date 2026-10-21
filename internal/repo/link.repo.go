@@ -30,3 +30,14 @@ func (lr *LinkRepo) CreateLink(ctx context.Context, userID int, ogURL string, sl
 
 	return body, nil
 }
+
+func (lr *LinkRepo) GetOgURLBySlug(ctx context.Context, slug string) (string, error) {
+	sql := `SELECT original_url FROM links WHERE slug = $1 AND deleted_at IS NULL`
+
+	var originalURL string
+	if err := lr.db.QueryRow(ctx, sql, slug).Scan(&originalURL); err != nil {
+		return "", err
+	}
+
+	return originalURL, nil
+}

@@ -58,3 +58,13 @@ func (ls *LinkService) GenerateRandSlug(n int) string {
 	}
 	return string(b)
 }
+
+func (ls *LinkService) GetOriginalURL(ctx context.Context, slug string) (string, error) {
+	// Kamu bisa tambahkan caching Redis di sini nanti agar query-nya makin cepat!
+	originalURL, err := ls.lr.GetOgURLBySlug(ctx, slug)
+	if err != nil {
+		return "", err
+	}
+
+	return originalURL, nil
+}

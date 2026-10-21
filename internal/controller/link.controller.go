@@ -80,3 +80,36 @@ func (lh *LinkController) CreateLinkController(ctx *gin.Context) {
 		Data:    res,
 	})
 }
+
+// RedirectLinkController godoc
+// @Summary      Redirect Short Link
+// @Description  Redirect to original URL by slug
+// @Tags         Link
+// @Param        slug  path  string  true  "Short link slug"
+// @Success      302
+// @Failure      404   {object}  dto.ErrorResponse
+// @Failure      500   {object}  dto.ErrorResponse
+// @Router       /{slug} [get]
+func (lh *LinkController) RedirectLinkController(ctx *gin.Context) {
+	slug := ctx.Param("slug")
+	if slug == "" {
+		ctx.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Success: false,
+			Msg:     "slug is required",
+		})
+		return
+	}
+
+	originalURL, err := lh.ls.GetOriginalURL(ctx.Request.Context(), slug)
+	if err != nil {
+		log.Println("Redirect error:", err.Error())
+		ctx.JSON(http.StatusNotFound, dto.ErrorResponse{
+			Success: false,
+			Msg:     "URL not found",
+		})
+		return
+	}
+
+	// HTTP Status 302 Found untuk Temporary Redirect
+	ctx.Redirect(http.StatusFound, originalURL)
+}

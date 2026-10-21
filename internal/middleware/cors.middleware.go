@@ -8,11 +8,22 @@ import (
 )
 
 func Cors(ctx *gin.Context) {
-	allowedOrigin := []string{"http://localhost:5173", "http://127.0.0.1:5173, http://localhost:8080", "http://127.0.0.1:8080"}
+	allowedOrigins := []string{
+		"http://localhost:5173",
+		"http://127.0.0.1:5173",
+		"http://localhost:8080",
+		"http://127.0.0.1:8080",
+		"http://localhost:8000", // Ditambahkan untuk Swagger UI
+		"http://127.0.0.1:8000",
+	}
+
 	currentOrigin := ctx.GetHeader("Origin")
 
-	if slices.Contains(allowedOrigin, currentOrigin) {
+	if slices.Contains(allowedOrigins, currentOrigin) {
 		ctx.Header("Access-Control-Allow-Origin", currentOrigin)
+	} else if currentOrigin == "" {
+		// Jika dipanggil langsung lewat browser address bar
+		ctx.Header("Access-Control-Allow-Origin", "*")
 	}
 
 	ctx.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, XXX-Header")
@@ -21,7 +32,7 @@ func Cors(ctx *gin.Context) {
 
 	// Preflight request
 	if ctx.Request.Method == http.MethodOptions {
-		ctx.AbortWithStatus(http.StatusNoContent) // Return status 204
+		ctx.AbortWithStatus(http.StatusNoContent)
 		return
 	}
 
