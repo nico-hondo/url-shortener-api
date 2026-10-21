@@ -1,0 +1,148 @@
+basePath: /
+definitions:
+  dto.ErrorResponse:
+    properties:
+      data: {}
+      msg:
+        type: string
+      success:
+        type: boolean
+    type: object
+  dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.RegisterRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    type: object
+  dto.Response:
+    properties:
+      data: {}
+      msg:
+        type: string
+      success:
+        type: boolean
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: Completed Eventhub backend during Koda Bootcamp
+  title: Url Shortener
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login Acc from body
+      parameters:
+      - description: body to login
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Login an Account
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Blacklist the authenticated access token in Redis until its expiration.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully logged out
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "401":
+          description: Not authenticated
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerToken: []
+      summary: Log out an Account
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Regist Acc from body
+      parameters:
+      - description: body to register
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Register an Account
+      tags:
+      - Auth
+securityDefinitions:
+  BearerToken:
+    description: Bearer Token used as identity for accessing backend
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
