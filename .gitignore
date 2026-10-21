@@ -1,0 +1,11 @@
+*.sql
+
+*.http
+
+.air.toml
+tmp
+
+.env*
+
+*.md
+!readme.md
