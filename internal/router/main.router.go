@@ -18,6 +18,7 @@ func InitMainRouter(router *gin.Engine, db *pgxpool.Pool, rds *redis.Client) {
 
 	router.GET("/documentation/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	initAuthRouter(router, db, rds)
+	initLinkRouter(router, db)
 
 	router.NoRoute(func(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, dto.ErrorResponse{

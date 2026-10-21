@@ -15,6 +15,63 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/links": {
+            "post": {
+                "security": [
+                    {
+                        "BearerToken": []
+                    }
+                ],
+                "description": "Generate short URL with optional custom slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Link"
+                ],
+                "summary": "Create Short Link",
+                "parameters": [
+                    {
+                        "description": "Create link body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateLinkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Login Acc from body",
@@ -155,6 +212,22 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.CreateLinkRequest": {
+            "type": "object",
+            "required": [
+                "original_url"
+            ],
+            "properties": {
+                "original_url": {
+                    "type": "string",
+                    "example": "https://www.example.com/very/long/url"
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "abc123"
+                }
+            }
+        },
         "dto.ErrorResponse": {
             "type": "object",
             "properties": {
