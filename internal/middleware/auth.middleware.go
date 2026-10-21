@@ -3,7 +3,9 @@ package middleware
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -37,7 +39,7 @@ func CheckToken(c *gin.Context) {
 			Success: false,
 			Msg:     "invalid bearer token",
 		})
-		c.Abort()
+
 		return
 	}
 	var token pkg.JwtClaims
@@ -60,48 +62,74 @@ func CheckToken(c *gin.Context) {
 	c.Next()
 }
 
-func AuthMiddleware(rdb *redis.Client, jwtSecret string) gin.HandlerFunc {
+func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader("Authorization")
 		if authHeader == "" {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
-			return
-		}
-
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if tokenString == authHeader {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
-			return
-		}
-
-		// 1. CEK BLACKLIST DI REDIS
-		key := fmt.Sprintf("nicohondo:blacklist:%s", tokenString)
-		exists, err := rdb.Exists(ctx, key).Result()
-		if err == nil && exists > 0 {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "Token has been revoked/logged out. Please login again.",
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, dto.Response{
+				Success: false,
+				Msg:     "please login first",
 			})
 			return
 		}
 
-		// 2. Parse & Validate JWT Token
-		token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-			return []byte(jwtSecret), nil
-		})
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, dto.Response{
+				Success: false,
+				Msg:     "invalid bearer token format",
+			})
+			return
+		}
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
-		if err != nil || !token.Valid {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+		// if tokenString == authHeader {
+		// 	ctx.AbortWithStatusJSON(http.StatusUnauthorized, dto.Response{
+		// 		Success: false,
+		// 		Msg:     "invalid bearer token format",
+		// 	})
+		// 	return
+		// }
+
+		// 1. Decode & Validasi Token JWT
+		var tokenClaims pkg.JwtClaims
+		err := tokenClaims.DecodeToken(tokenString)
+		if err != nil {
+			if errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenInvalidIssuer) {
+				ctx.AbortWithStatusJSON(http.StatusUnauthorized, dto.Response{
+					Success: false,
+					Msg:     "invalid or expired token",
+				})
+				return
+			}
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, dto.Response{
+				Success: false,
+				Msg:     "terjadi kesalahan sistem",
+			})
 			return
 		}
 
-		// Simpan claims/token string ke konteks jika dibutuhkan di handler
-		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			ctx.Set("user_id", claims["user_id"])
-			ctx.Set("token_string", tokenString)
-			ctx.Set("claims", claims)
+		// 2. Cek Blacklist di Redis berdasarkan JTI
+		key := fmt.Sprintf("%s:bl:%s", os.Getenv("RDB_USER"), tokenClaims.ID)
+		exists, err := rdb.Exists(ctx.Request.Context(), key).Result()
+		if err != nil {
+			log.Println("Redis Error Middleware: ", err.Error())
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, dto.Response{
+				Success: false,
+				Msg:     "terjadi kesalahan pada sistem otentikasi",
+			})
+			return
 		}
 
+		if exists > 0 {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, dto.Response{
+				Success: false,
+				Msg:     "token has been revoked/logged out. Please login again.",
+			})
+			return
+		}
+
+		// 3. Set data claims ke context Gin
+		ctx.Set("token", tokenClaims)
 		ctx.Next()
 	}
 }

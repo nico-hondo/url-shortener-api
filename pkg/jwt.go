@@ -5,21 +5,27 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	apperror "github.com/nico-hondo/url-shortener/internal/error"
 )
 
 type JwtClaims struct {
-	Id   int    `json:"id"`
-	Role string `json:"role"`
+	Id int `json:"id"`
 	jwt.RegisteredClaims
 }
 
-func NewJwtClaims(id int, role string) *JwtClaims {
+func NewJwtClaims(id int) *JwtClaims {
+	now := time.Now()
+	jti := uuid.NewString()
+
 	return &JwtClaims{
-		Id:        id,
-		Role:      role,
-		Issuer:    os.Getenv("JWT_ISSUER"),
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 60)),
+		Id: id,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        jti,
+			Issuer:    os.Getenv("JWT_ISSUER"),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 60)),
+			IssuedAt:  jwt.NewNumericDate(now),
+		},
 	}
 }
 
