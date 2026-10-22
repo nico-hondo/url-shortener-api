@@ -13,7 +13,7 @@ func Cors(ctx *gin.Context) {
 		"http://127.0.0.1:5173",
 		"http://localhost:8080",
 		"http://127.0.0.1:8080",
-		"http://localhost:8000", // Ditambahkan untuk Swagger UI
+		"http://localhost:8000", // Swagger UI
 		"http://127.0.0.1:8000",
 	}
 
@@ -21,16 +21,13 @@ func Cors(ctx *gin.Context) {
 
 	if slices.Contains(allowedOrigins, currentOrigin) {
 		ctx.Header("Access-Control-Allow-Origin", currentOrigin)
-	} else if currentOrigin == "" {
-		// Jika dipanggil langsung lewat browser address bar
-		ctx.Header("Access-Control-Allow-Origin", "*")
+		ctx.Header("Access-Control-Allow-Credentials", "true") // <-- WAJIB untuk credentials: "include"
+		ctx.Header("Vary", "Origin")
+		ctx.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		ctx.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 	}
 
-	ctx.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, XXX-Header")
-	// Perbaikan: Pakai 'Methods' (jamak) & tambahkan POST, PUT, DELETE
-	ctx.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-
-	// Preflight request
+	// Preflight: jawab langsung
 	if ctx.Request.Method == http.MethodOptions {
 		ctx.AbortWithStatus(http.StatusNoContent)
 		return
