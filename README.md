@@ -113,7 +113,6 @@ For live reload development, install Air and run:
 
 Here for [.air.toml](https://gist.github.com/nico-hondo/2c968070d9e3311cce91e66ebae7d48c) configuration file for Air live reload.
 
-- then
 ```bash
 air
 ```
