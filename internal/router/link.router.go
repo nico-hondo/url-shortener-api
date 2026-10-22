@@ -17,5 +17,7 @@ func initLinkRouter(r *gin.Engine, db *pgxpool.Pool) {
 	lh := controller.NewLinkController(ls)
 
 	linkRouter.POST("/links", middleware.CheckToken, lh.CreateLinkController)
+	linkRouter.GET("/links", middleware.CheckToken, lh.GetUserLinksController)
+	linkRouter.DELETE("/links/:id", middleware.CheckToken, lh.DeleteLinkController)
 	r.GET("/:slug", lh.RedirectLinkController)
 }

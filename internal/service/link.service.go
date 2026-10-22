@@ -60,11 +60,46 @@ func (ls *LinkService) GenerateRandSlug(n int) string {
 }
 
 func (ls *LinkService) GetOriginalURL(ctx context.Context, slug string) (string, error) {
-	// Kamu bisa tambahkan caching Redis di sini nanti agar query-nya makin cepat!
 	originalURL, err := ls.lr.GetOgURLBySlug(ctx, slug)
 	if err != nil {
 		return "", err
 	}
 
 	return originalURL, nil
+}
+
+func (ls *LinkService) GetUserLink(ctx context.Context, userId int) ([]dto.UserLinkListResponse, error) {
+	links, err := ls.lr.GetUserLinks(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Inisialisasi slice penampung DTO (Gunakan slice kosong agar saat di-JSON-kan hasilnya [] bukan null)
+	res := make([]dto.UserLinkListResponse, 0, len(links))
+
+	baseURL := os.Getenv("BASE_URL")
+	if baseURL == "" {
+		baseURL = "http://localhost:8000"
+	}
+
+	for _, link := range links {
+		res = append(res, dto.UserLinkListResponse{
+			User_Id:     link.User_Id,
+			OriginalURL: link.Original_Url,
+			Slug:        link.Slug,
+			ShortURL:    fmt.Sprintf("%s/%s", baseURL, link.Slug),
+			CreatedAt:   link.Created_At,
+		})
+	}
+
+	return res, nil
+}
+
+func (ls *LinkService) DeleteLinkService(ctx context.Context, linkID int, userID int) error {
+	err := ls.lr.DeleteLinkRepo(ctx, linkID, userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

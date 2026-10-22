@@ -54,6 +54,19 @@ definitions:
       success:
         type: boolean
     type: object
+  dto.UserLinkListResponse:
+    properties:
+      created_at:
+        type: string
+      original_url:
+        type: string
+      short_url:
+        type: string
+      slug:
+        type: string
+      user_id:
+        type: integer
+    type: object
 host: localhost:8000
 info:
   contact: {}
@@ -85,6 +98,37 @@ paths:
       tags:
       - Link
   /api/links:
+    get:
+      consumes:
+      - application/json
+      description: Get list of all active short links created by authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.UserLinkListResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerToken: []
+      summary: Get All User Short Links
+      tags:
+      - Link
     post:
       consumes:
       - application/json
@@ -118,6 +162,45 @@ paths:
       security:
       - BearerToken: []
       summary: Create Short Link
+      tags:
+      - Link
+  /api/links/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete short link by ID for the authenticated owner
+      parameters:
+      - description: Link ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerToken: []
+      summary: Delete Short Link
       tags:
       - Link
   /auth/login:
